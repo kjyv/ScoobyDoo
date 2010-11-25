@@ -16,16 +16,22 @@ import com.aliasi.dict.DictionaryEntry;
 import com.aliasi.dict.MapDictionary;
 import com.aliasi.dict.ExactDictionaryChunker;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
+import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
 import com.aliasi.tokenizer.TokenizerFactory;
+import com.aliasi.tokenizer.StopTokenizerFactory;
 import com.aliasi.util.ObjectToCounterMap;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.xml.sax.InputSource;
 
@@ -72,6 +78,7 @@ public class Tokenize {
         		throw new IllegalArgumentException("arguments must end with .xml");
         	}
         }
+        handler.report();
 	}
 	
     static void chunk(ExactDictionaryChunker chunker, String text) {
@@ -94,17 +101,24 @@ public class Tokenize {
     }
 
     static class CitationHandler implements MedlineHandler {
-    	//TODO: just copied from WordCountHandler for now, make me useful
         long mCitationCount = 0L;
-        ObjectToCounterMap<String> mCorrexCounter = new ObjectToCounterMap<String>();
         ObjectToCounterMap<String> mCounter = new ObjectToCounterMap<String>();
+        
+        Set<String> stopSet = new HashSet();
+        String pmid;
+        
+        public CitationHandler() throws IOException{
+        	 BufferedReader stopWords = new BufferedReader(new FileReader("english_stop_words.txt"));
+        	 String line;
+        	 while ((line = stopWords.readLine()) != null){
+        		 stopSet.add(line);
+        	 }
+        }
+        
         public void handle(MedlineCitation citation) {
             ++mCitationCount;
 
-            for (CommentOrCorrection cc : citation.commentOrCorrections())
-                mCorrexCounter.increment(cc.type());
-
-            String id = citation.pmid();
+            pmid = citation.pmid();
             // System.out.println("processing pmid=" + id);
 
             Article article = citation.article();
@@ -117,23 +131,29 @@ public class Tokenize {
                 addText(abstractText);
             }
 
-            MeshHeading[] headings = citation.meshHeadings();
+            /*MeshHeading[] headings = citation.meshHeadings();
             for (MeshHeading heading : headings) {
                 for (Topic topic : heading.topics()) { 
                     String topicText = topic.topic();
                     addText(topicText);
                 }
-            }
+            }*/
         }
         public void delete(String pmid) {
             throw new UnsupportedOperationException("not expecting deletes. found pmid=" + pmid);
         }
         public void addText(String text) {
             char[] cs = text.toCharArray();
+            
+            //set up tokenizers
             TokenizerFactory factory = IndoEuropeanTokenizerFactory.INSTANCE;
-            Tokenizer tokenizer = factory.tokenizer(cs,0,cs.length);
+            StopTokenizerFactory stopFactory = new StopTokenizerFactory(factory, stopSet);
+            LowerCaseTokenizerFactory lcFactory = new LowerCaseTokenizerFactory(stopFactory);
+            
+            Tokenizer tokenizer = lcFactory.tokenizer(cs,0,cs.length);
             for (String token : tokenizer) {
                 mCounter.increment(token);
+                //TODO: go through all our genes here and search for token.. slooow
             }
         }
         public void report() {
@@ -144,12 +164,6 @@ public class Tokenize {
                 int count = mCounter.getCount(key);
                 if (count < 10) break;
                 System.out.printf("%9d %s\n",count,key);
-            }
-            System.out.println("\nCorrection Counts");
-            List<String> ccKeysByCount = mCorrexCounter.keysOrderedByCountList();
-            for (String ccKey : ccKeysByCount) {
-                int count = mCorrexCounter.getCount(ccKey);
-                System.out.printf("%9d %s\n",count,ccKey);
             }
         }
     }
