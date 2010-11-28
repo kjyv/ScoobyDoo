@@ -4,12 +4,8 @@ import com.aliasi.lingmed.medline.parser.Abstract;
 import com.aliasi.lingmed.medline.parser.MedlineCitation;
 import com.aliasi.lingmed.medline.parser.MedlineHandler;
 import com.aliasi.lingmed.medline.parser.MedlineParser;
-import com.aliasi.lingmed.medline.parser.CommentOrCorrection;
-import com.aliasi.lingmed.medline.parser.MeshHeading;
-import com.aliasi.lingmed.medline.parser.Topic;
 
 import com.aliasi.chunk.Chunk;
-import com.aliasi.chunk.Chunker;
 import com.aliasi.chunk.Chunking;
 
 import com.aliasi.dict.DictionaryEntry;
@@ -24,15 +20,10 @@ import com.aliasi.tokenizer.StopTokenizerFactory;
 import com.aliasi.util.ObjectToCounterMap;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.xml.sax.InputSource;
 
@@ -47,6 +38,7 @@ public class Tokenize {
 	 */
 	public static void main(String[] args) throws IOException {
 		long startTime = System.currentTimeMillis();
+
         boolean saveXML = false;
         MedlineParser parser = new MedlineParser(saveXML);
         result = new StringBuilder("<results>\n");
@@ -70,8 +62,9 @@ public class Tokenize {
         long mCitationCount = 0L;
         ObjectToCounterMap<String> mCounter = new ObjectToCounterMap<String>();
         
-        Set<String> stopSet = new HashSet<String>(),
+        HashSet<String> stopSet = new HashSet<String>(),
         			geneSet = new HashSet<String>();
+
         String pmid;
         StringBuilder result;
         LowerCaseTokenizerFactory lcFactory;
@@ -83,6 +76,7 @@ public class Tokenize {
         		 if(line.equals(""))
         			 continue;
         		 stopSet.add(line);
+
         	 }
         	 stopWords.close();
         	 
@@ -95,7 +89,7 @@ public class Tokenize {
         	 }
         	 geneNames.close();
         	 
-        	//set up tokenizers
+        	 //set up tokenizers
              //TokenizerFactory factory = IndoEuropeanTokenizerFactory.INSTANCE;
         	 RegExTokenizerFactory factory = new RegExTokenizerFactory("\\S+");
              StopTokenizerFactory stopFactory = new StopTokenizerFactory(factory, stopSet);
@@ -144,7 +138,7 @@ public class Tokenize {
         	StringBuilder localResult = new StringBuilder(text);
         	int numFoundGenes = 0;
             char[] cs = text.toCharArray();
-            
+                       
             Tokenizer tokenizer = lcFactory.tokenizer(cs,0,cs.length);
             for (String token : tokenizer) {
             	
