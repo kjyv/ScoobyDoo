@@ -5,17 +5,9 @@ import com.aliasi.lingmed.medline.parser.MedlineCitation;
 import com.aliasi.lingmed.medline.parser.MedlineHandler;
 import com.aliasi.lingmed.medline.parser.MedlineParser;
 
-import com.aliasi.chunk.Chunk;
-import com.aliasi.chunk.Chunking;
-
-import com.aliasi.dict.DictionaryEntry;
-import com.aliasi.dict.MapDictionary;
-import com.aliasi.dict.ExactDictionaryChunker;
-import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
 import com.aliasi.tokenizer.RegExTokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
-import com.aliasi.tokenizer.TokenizerFactory;
 import com.aliasi.tokenizer.StopTokenizerFactory;
 import com.aliasi.util.ObjectToCounterMap;
 
@@ -23,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 
 import org.xml.sax.InputSource;
 
