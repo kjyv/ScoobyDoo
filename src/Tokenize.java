@@ -5,11 +5,11 @@ import com.aliasi.lingmed.medline.parser.MedlineCitation;
 import com.aliasi.lingmed.medline.parser.MedlineHandler;
 import com.aliasi.lingmed.medline.parser.MedlineParser;
 
+import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
 import com.aliasi.tokenizer.LowerCaseTokenizerFactory;
-import com.aliasi.tokenizer.RegExTokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
 import com.aliasi.tokenizer.StopTokenizerFactory;
-import com.aliasi.util.ObjectToCounterMap;
+import com.aliasi.tokenizer.TokenizerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -36,7 +36,6 @@ public class Tokenize {
         CitationHandler handler = new CitationHandler(result);
         parser.setHandler(handler);
         for (String arg : args) {
-            //System.out.println("Processing file=" + arg);
             if (arg.endsWith(".xml")) {
                 InputSource inputSource = new InputSource(arg);
                 parser.parse(inputSource);
@@ -46,51 +45,56 @@ public class Tokenize {
         }
         result.append("</results>");
         System.out.println(result);
-        System.out.println("time: " + (System.currentTimeMillis() - startTime)/1000.0);
+        System.err.println("genes tagged: " + handler.numFoundGenes);
+        System.err.println("time: " + (System.currentTimeMillis() - startTime)/1000.0 + "s");
 	}
 
     static class CitationHandler implements MedlineHandler {
-        long mCitationCount = 0L;
-        ObjectToCounterMap<String> mCounter = new ObjectToCounterMap<String>();
+        long numFoundGenes = 0L;
         
         HashSet<String> stopSet = new HashSet<String>(),
-        			geneSet = new HashSet<String>();
+        				geneSet = new HashSet<String>();
 
         String pmid;
         StringBuilder result;
         LowerCaseTokenizerFactory lcFactory;
         
         public CitationHandler(StringBuilder result) throws IOException{
-        	 BufferedReader stopWords = new BufferedReader(new FileReader("english_stop_words.txt"));
-        	 String line;
-        	 while ((line = stopWords.readLine()) != null){
-        		 if(line.equals(""))
-        			 continue;
-        		 stopSet.add(line);
+        	//read in stop words
+        	BufferedReader stopWords = new BufferedReader(new FileReader("english_stop_words.txt"));
+        	String line;
+        	while ((line = stopWords.readLine()) != null){
+        		if(line.equals(""))
+        		continue;
+        		stopSet.add(line);
+        	}
+        	stopWords.close();
 
-        	 }
-        	 stopWords.close();
-        	 
-        	 BufferedReader geneNames = new BufferedReader(new FileReader("human-genenames.txt"));
-        	 //String line;
-        	 while ((line = geneNames.readLine()) != null){
-        		 if(line.length() == 0)
-        			 continue;
-        		 geneSet.add(line);
-        	 }
-        	 geneNames.close();
-        	 
-        	 //set up tokenizers
-             //TokenizerFactory factory = IndoEuropeanTokenizerFactory.INSTANCE;
-        	 RegExTokenizerFactory factory = new RegExTokenizerFactory("\\S+");
-             StopTokenizerFactory stopFactory = new StopTokenizerFactory(factory, stopSet);
-             lcFactory = new LowerCaseTokenizerFactory(stopFactory);
-        	 
-        	 this.result = result;
+        	//read in tag names
+        	BufferedReader geneNames = new BufferedReader(new FileReader("human-genenames.txt"));
+			while ((line = geneNames.readLine()) != null){
+				if(line.length() == 0)
+					continue;
+				geneSet.add(line);
+			}
+			geneNames.close();
+			
+			//set up tokenizers
+			TokenizerFactory factory = IndoEuropeanTokenizerFactory.INSTANCE;
+
+			//this could be improved by using whitespace tokenizer and also add tokens
+			//which are substrings of tokens splitting on / and -
+			//we would need a new tokenizer for that though
+			//RegExTokenizerFactory factory = new RegExTokenizerFactory("\\S+");
+			//...
+			
+			StopTokenizerFactory stopFactory = new StopTokenizerFactory(factory, stopSet);
+			lcFactory = new LowerCaseTokenizerFactory(stopFactory);
+			
+			this.result = result;
         }
         
         public void handle(MedlineCitation citation) {
-            ++mCitationCount;
             result.append("<MedlineCitation>\n");
 
             pmid = citation.pmid();
@@ -113,27 +117,19 @@ public class Tokenize {
             }
             
             result.append("</MedlineCitation>\n");
-
-            /*MeshHeading[] headings = citation.meshHeadings();
-            for (MeshHeading heading : headings) {
-                for (Topic topic : heading.topics()) { 
-                    String topicText = topic.topic();
-                    addText(topicText);
-                }
-            }*/
         }
+        
         public void delete(String pmid) {
             throw new UnsupportedOperationException("not expecting deletes. found pmid=" + pmid);
         }
+        
         public void addText(String text) {
         	StringBuilder localResult = new StringBuilder(text);
         	int numFoundGenes = 0;
             char[] cs = text.toCharArray();
                        
             Tokenizer tokenizer = lcFactory.tokenizer(cs,0,cs.length);
-            for (String token : tokenizer) {
-            	
-                mCounter.increment(token);
+            for (String token : tokenizer) {            	
                 if(geneSet.contains(token))
                 {
                 	//System.out.println(token);
@@ -143,6 +139,7 @@ public class Tokenize {
                 	numFoundGenes++;
                 }
             }
+            this.numFoundGenes += numFoundGenes;
             result.append(localResult);
         }
     }

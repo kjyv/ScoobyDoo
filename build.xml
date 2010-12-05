@@ -3,14 +3,14 @@
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
     <target name="create_run_jar">
-        <jar destfile="/home/stefan/develop/eclipse/ScoobyDoo/scoobydoo.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="scoobydoo.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="Tokenize"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <fileset dir="/home/stefan/develop/eclipse/ScoobyDoo/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="/home/stefan/develop/eclipse/ScoobyDoo/lib/lingpipe-4.0.1.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="/home/stefan/develop/eclipse/ScoobyDoo/lib/lingmed-1.3.jar"/>
+            <fileset dir="bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/lingpipe-4.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/lingmed-1.3.jar"/>
         </jar>
     </target>
 </project>
