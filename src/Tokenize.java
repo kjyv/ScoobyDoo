@@ -65,10 +65,7 @@ public class Tokenize {
 		Pattern pGt;
 		Pattern pLt;
 		
-		public CitationHandler(StringBuilder result) throws IOException {
-			pGt = Pattern.compile("\\>", Pattern.DOTALL | Pattern.UNICODE_CASE);
-			pLt = Pattern.compile("\\<", Pattern.DOTALL | Pattern.UNICODE_CASE);
-			
+		public CitationHandler(StringBuilder result) throws IOException {			
 			// read in stop words
 			BufferedReader stopWords = new BufferedReader(new FileReader(
 					"english_stop_words.txt"));
@@ -140,10 +137,6 @@ public class Tokenize {
 		}
 
 		public void addText(String text) {
-			/*Matcher m = pGt.matcher(text);
-			m.replaceAll("&gt;");
-			m = pLt.matcher(text);
-			m.replaceAll("&lt;");*/
 			text = text.replaceAll(">", "&gt;").replaceAll("<", "&gt;");
 			
 			StringBuilder localResult = new StringBuilder(text);
