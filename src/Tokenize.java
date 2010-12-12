@@ -14,7 +14,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.regex.Matcher;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import org.xml.sax.InputSource;
@@ -33,7 +33,7 @@ public class Tokenize {
 
 		boolean saveXML = true;
 		MedlineParser parser = new MedlineParser(saveXML);
-		result = new StringBuilder("<results>\n");
+		result = new StringBuilder("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<results>\n");
 		CitationHandler handler = new CitationHandler(result);
 		parser.setHandler(handler);
 		for (String arg : args) {
@@ -57,6 +57,7 @@ public class Tokenize {
 
 		HashSet<String> stopSet = new HashSet<String>(),
 				geneSet = new HashSet<String>();
+		TreeSet<String> tokenSet = new TreeSet<String>();
 
 		String pmid;
 		StringBuilder result;
@@ -114,6 +115,7 @@ public class Tokenize {
 
 			Article article = citation.article();
 			String titleText = article.articleTitleText();
+
 			result.append("<ArticleTitle>\n");
 			addText(titleText);
 			result.append("\n</ArticleTitle>\n");
@@ -137,7 +139,7 @@ public class Tokenize {
 		}
 
 		public void addText(String text) {
-			text = text.replaceAll(">", "&gt;").replaceAll("<", "&gt;");
+			text = text.replaceAll(">", "&gt;").replaceAll("<", "&gt;").replaceAll("&", "&amp;");
 			
 			StringBuilder localResult = new StringBuilder(text);
 			int numFoundGenes = 0;
@@ -145,6 +147,7 @@ public class Tokenize {
 
 			Tokenizer tokenizer = lcFactory.tokenizer(cs, 0, cs.length);
 			for (String token : tokenizer) {
+				//tokenSet.add(token);
 				if (geneSet.contains(token)) {
 					// System.out.println(token);
 					// System.out.println("start: " +
